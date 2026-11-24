@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1c1c16">
+  <meta name="description" content="Explore Bellward, a low-poly medieval city alive with wandering crowds.">
+  <title>Bellward — The Old City</title>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./engine.js"></script>
+  <script defer src="./city.js"></script>
+  <script defer src="./game.js"></script>
+</head>
+<body>
+  <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-mark" viewBox="0 0 32 32"><path d="M16 2 30 16 16 30 2 16Z M16 5v22M5 16h22M16 10l5 6-5 6-5-6Z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="m16 5 2 6h-4zm11 11-6 2v-4zM16 27l-2-6h4zM5 16l6-2v4z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14m6-14v14" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M3 12h17m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m6 12 4 4 8-8" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="6.5" y="3.5" width="11" height="17" rx="5.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M12 7v4" stroke="currentColor" stroke-width="1.3"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2zm6-2v14m6-12v14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><path d="M16 19v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-3.9M15 5a3.5 3.5 0 0 1 0 6.8" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="9.5" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M5 10a7 7 0 1 1 1 7m-1-7V5m0 5h5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+  <main class="game" id="game" data-mode="select">
+    <canvas id="world" aria-label="Third-person view of the medieval city"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand"><svg><use href="#i-mark"/></svg><div><div class="brand-name">BELLWARD</div><div class="brand-sub">THE OLD CITY</div></div></div>
+      <div class="compass" aria-hidden="true">
+        <div class="compass-readout"><span id="bearing-left">NW</span><i></i><span id="bearing-main">N</span><i></i><span id="bearing-right">NE</span></div>
+        <div class="compass-scale"></div><b></b>
+      </div>
+      <div class="header-actions">
+        <button class="icon-button" type="button" id="reset-camera" aria-label="Center camera" title="Center camera"><svg><use href="#i-reset"/></svg></button>
+        <button class="icon-button" type="button" id="pause" aria-label="Pause game" title="Pause game"><svg><use href="#i-pause"/></svg></button>
+      </div>
+    </header>
+
+    <section class="selection" id="selection" aria-labelledby="selection-title">
+      <div class="selection-header">
+        <p class="eyebrow"><span></span> THE OLD CITY</p>
+        <h1 id="selection-title">Choose your<br> character</h1>
+        <p class="intro">Pick a face to wear in the streets of Bellward.</p>
+      </div>
+      <div class="roster" id="roster" role="group" aria-label="Characters"></div>
+      <div class="bio" aria-live="polite">
+        <i></i><div><h2 id="character-name">The Wayfarer</h2><p id="character-description"></p></div>
+      </div>
+      <button class="enter-button" id="enter" type="button">Enter the city <svg><use href="#i-arrow"/></svg></button>
+    </section>
+
+    <aside class="district" aria-label="Current district">
+      <div class="district-title"><svg><use href="#i-map"/></svg><span>DISTRICT MAP</span></div>
+      <div class="map-frame"><canvas id="map" width="336" height="252" aria-label="Map of Bellward"></canvas><span class="map-north">N</span></div>
+      <div class="map-caption"><i></i><span id="district-name">Market Court</span></div>
+    </aside>
+    <div class="place" aria-hidden="true"><span></span><div><div class="place-label">BELLWARD DISTRICT</div><div id="place-name">Market Court</div></div></div>
+
+    <div id="crowd-status" class="crowd-status" aria-live="polite" hidden><svg><use href="#i-people"/></svg><span id="crowd-text"></span></div>
+    <footer class="controls" aria-label="Controls">
+      <span class="desktop-controls"><span class="keyset"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span> Move</span>
+      <span class="desktop-controls"><svg><use href="#i-mouse"/></svg> Drag to look</span>
+      <span class="desktop-controls"><kbd>Shift</kbd> Run</span>
+      <span class="desktop-controls"><kbd>E</kbd> Blend</span>
+      <span class="desktop-controls"><kbd>Esc</kbd> Pause</span>
+      <span class="touch-help">Use the stick to move · Drag to look</span>
+    </footer>
+    <div class="touch-controls">
+      <div id="stick" class="stick" aria-label="Movement joystick"><span></span></div>
+      <div class="touch-actions"><button id="touch-run" class="icon-button" type="button" aria-label="Run" aria-pressed="false">Run</button><button id="touch-blend" class="icon-button" type="button" aria-label="Blend into the crowd"><svg><use href="#i-people"/></svg></button></div>
+    </div>
+
+    <div class="pause-overlay" id="pause-overlay" hidden>
+      <section class="pause-card" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <svg class="pause-mark"><use href="#i-mark"/></svg>
+        <h2 id="pause-title">Paused</h2>
+        <button class="enter-button" id="resume" type="button">Resume <svg><use href="#i-arrow"/></svg></button>
+        <button class="text-button" id="change" type="button">Choose a character</button>
+      </section>
+    </div>
+    <p class="error" id="error" hidden>Bellward needs WebGL. Try a browser with hardware acceleration enabled.</p>
+    <noscript><p class="error">Enable JavaScript to enter Bellward.</p></noscript>
+  </main>
+</body>
+</html>
