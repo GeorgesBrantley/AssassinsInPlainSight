@@ -96,7 +96,11 @@ Contract kills assign a new target and award points based on your stealth at the
 | 100 through 125 | Stealth Kill | 150 |
 | Above 125 | Incognito Kill | 200 |
 
-Off-contract kills cost **50 points** at every stealth tier and replace your current contract as soon as a different target is available. Stunning costs **10 points**, except stunning someone who has you as their target costs **0**. Actions have a one-second cooldown. Stuns play a strike and stagger animation, with sparks circling the stunned character for four seconds. Eliminations play a shared attacker strike and victim fall animation, and movement pauses briefly during the strike. Eliminated characters remain on the ground for six seconds before respawning. Scores reset at the start of each match.
+Off-contract kills cost **50 points** at every stealth tier and replace your current contract as soon as a different target is available. If a pursuer eliminates the wrong character, their assigned player earns **50 points**. Scores reset at the start of each match.
+
+Stunning a pursuer is free and stuns them for four seconds. Stunning anyone else costs **25 points**, stuns them for one second, and stuns you for four seconds. Stuns play a strike and stagger animation, with sparks circling the character you strike while they are stunned. Actions have a one-second cooldown.
+
+Eliminations play a shared attacker strike and victim fall animation, and movement pauses briefly during the strike. Eliminated characters remain on the ground for six seconds before respawning. Players respawn at a randomly selected map spawn point, excluding their last spawn point.
 
 If another player stuns you, your current contract clears and the HUD counts down to a different target. The server picks a random delay of **3–10 seconds** from the moment the stun lands.
 

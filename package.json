@@ -1,7 +1,7 @@
 {
   "name": "assassins-in-plain-sight",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Assassins in Plain Sight — a low-poly medieval city stealth game",
   "scripts": {
     "start": "python3 server.py",

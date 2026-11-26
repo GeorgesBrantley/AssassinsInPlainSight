@@ -75,6 +75,9 @@ class GameModeTest(unittest.TestCase):
         result = self.world.hit(hunter, victim, 'kill', self.now)
 
         self.assertEqual(result['delta'], -50)
+        self.assertEqual(self.world.state(old_target)['score'], 50)
+        self.assertEqual(victim['score'], 0)
+        self.assertEqual(replacement['score'], 0)
         self.assertEqual(self.world.state(hunter)['target']['id'], replacement['id'])
         self.assertIsNone(hunter['target_reassignment'])
 
@@ -96,6 +99,8 @@ class GameModeTest(unittest.TestCase):
         hunter, victim, old_target = self.players[:3]
         victim['target_id'] = old_target['id']
         self.world.hit(hunter, victim, 'stun', self.now)
+        self.assertEqual(hunter['stunned_until'], self.now+4)
+        self.assertEqual(victim['stunned_until'], self.now+1)
         self.assertIsNotNone(victim['target_id'])
         self.assertNotEqual(victim['target_id'], old_target['id'])
         self.assertIsNone(victim['target_reassignment'])

@@ -20,7 +20,10 @@ REACH = 2.2
 CULT_RADIUS = 8
 FIRECRACKER_RADIUS = 4
 STUN_DURATION = 4
+WRONG_STUN_VICTIM_DURATION = 1
+WRONG_STUN_POINTS = 25
 STUN_TARGET_DELAY = (3, 10)
+WRONG_KILL_POINTS = 50
 STEALTH_BASE = 100
 STEALTH_MAX = 150
 STEALTH_MOVE_TIMEOUT = .5
@@ -589,10 +592,16 @@ class Combat:
                                              started=ended, duration=.8))
                     actor.pop('invisibility_end_effect')
             if actor['dead_until'] and actor['dead_until'] <= now:
-                first_spawn = self.player_spawns[0]
-                x, z = actor.get('spawn', (first_spawn['x'], first_spawn['z']))
+                if actor['kind'] == 'player':
+                    previous = actor.get('spawn')
+                    spawns = [s for s in self.player_spawns if (s['x'], s['z']) != previous]
+                    spawn = random.choice(spawns or self.player_spawns)
+                    actor.update(**spawn, spawn=(spawn['x'], spawn['z']))
+                else:
+                    first_spawn = self.player_spawns[0]
+                    actor['x'], actor['z'] = actor.get('spawn', (first_spawn['x'], first_spawn['z']))
                 actor.pop('animation', None)
-                actor.update(dead_until=0, stunned_until=0, x=x, z=z, stride=0, activity=None,
+                actor.update(dead_until=0, stunned_until=0, stride=0, activity=None,
                              revision=actor['revision']+1, route=[])
             if actor['kind'] in ('player','bot'):
                 reassignment = actor.get('target_reassignment')
@@ -760,7 +769,11 @@ class Combat:
             elif on_contract:
                 message, delta = 'Target eliminated', 100
             else:
-                message, delta = 'Wrong character eliminated', -50
+                message, delta = 'Wrong character eliminated', -WRONG_KILL_POINTS
+                target_player = next((p for p in self.server.players.values() if p['id'] == attacker['target_id']), None)
+                if target_player is not None:
+                    target_player['score'] += WRONG_KILL_POINTS
+                    target_player['notice'] = f'A pursuer eliminated the wrong character · +{WRONG_KILL_POINTS} points'
             self.kill_sequence += 1
             self.kill_feed.append(dict(id=self.kill_sequence, created=now,
                                        attacker=self.feed_name(attacker), target=self.feed_name(victim),
@@ -778,12 +791,16 @@ class Combat:
                 if attacker['target_id'] is None:
                     attacker['target_reassignment'] = (now, previous_target)
         else:
-            delta = 0 if victim['target_id'] == attacker['id'] else -10
+            defensive = victim['target_id'] == attacker['id']
+            delta = 0 if defensive else -WRONG_STUN_POINTS
+            duration = STUN_DURATION if defensive else WRONG_STUN_VICTIM_DURATION
             attacker['animation'] = dict(kind='stun-strike', started=now, duration=.55,
                                          x=attacker['x'], z=attacker['z'], angle=heading)
-            victim.update(stunned_until=now+STUN_DURATION, stride=0, revision=victim['revision']+1,
+            if not defensive:
+                attacker.update(stunned_until=now+STUN_DURATION, stride=0, revision=attacker['revision']+1)
+            victim.update(stunned_until=now+duration, stride=0, revision=victim['revision']+1,
                           notice='',
-                          animation=dict(kind='stagger', started=now, duration=STUN_DURATION,
+                          animation=dict(kind='stagger', started=now, duration=duration,
                                          x=victim['x'], z=victim['z'], angle=victim['angle']))
             if victim['kind'] == 'player':
                 pending = victim['target_reassignment']
@@ -794,7 +811,7 @@ class Combat:
                 else:
                     ready_at = now + random.uniform(*STUN_TARGET_DELAY)
                     victim.update(target_id=None, target_reassignment=(ready_at, previous_target))
-            message = 'Pursuer stunned' if delta == 0 else 'Character stunned'
+            message = 'Pursuer stunned' if defensive else 'Wrong character stunned · You were also stunned'
         if not ranged and (ambush or search):
             attacker['animation']['kind'] = ('hay-ambush-' if ambush else 'hay-search-') + action
             attacker['busy_until'] = now + attacker['animation']['duration']

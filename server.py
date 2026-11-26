@@ -216,14 +216,12 @@ class CityServer(ThreadingHTTPServer):
                 member['ready'] = False
 
     def place_player(self, player, slot):
-        spawns = self.combat.player_spawns
-        spawn = spawns[slot]
-        respawn = spawn if self.map_id == 'betrahold' else spawns[0]
+        spawn = self.combat.player_spawns[slot]
         revision = player.get('revision', -1) + 1
         self.combat.initialize(player)
         for key in ('animation', 'invisibility_end_effect'):
             player.pop(key, None)
-        player.update(**spawn, spawn=(respawn['x'], respawn['z']),
+        player.update(**spawn, spawn=(spawn['x'], spawn['z']),
                       stride=0, phase=0, revision=revision, updated=time.monotonic())
 
     def reset_world(self, map_id):

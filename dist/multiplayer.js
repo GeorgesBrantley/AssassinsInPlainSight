@@ -50,9 +50,9 @@ class Multiplayer {
     });
     this.$("account-toggle").addEventListener("click",()=>{
       this.registering=!this.registering;
-      this.$("account-title").textContent=this.registering?"Make yourself known":"Log in to the city";
-      this.$("account-submit").firstChild.textContent=this.registering?"Create account ":"Log in ";
-      this.$("account-toggle").textContent=this.registering?"Already a citizen? Log in":"New here? Create an account";
+      this.$("account-title").textContent=this.registering?"Create an account":"Log in";
+      this.$("account-submit").firstChild.textContent=this.registering?"Create an account ":"Log in ";
+      this.$("account-toggle").textContent=this.registering?"Already have an account? Log in":"Create an account";
       this.$("password").autocomplete=this.registering?"new-password":"current-password";
       this.$("account-message").textContent=this.registering?"Username: 3–20 letters, numbers, or underscores.":"";
     });
@@ -132,7 +132,7 @@ class Multiplayer {
   async authenticate() {
     this.$("account-submit").disabled=true;
     this.$("account-toggle").disabled=true;
-    this.$("account-message").textContent=this.registering?"Creating your account…":"Opening the gates…";
+    this.$("account-message").textContent=this.registering?"Creating your account…":"Logging in…";
     try {
       const result=await this.request(this.registering?"/api/register":"/api/login",{
         username:this.$("username").value.trim(), password:this.$("password").value,

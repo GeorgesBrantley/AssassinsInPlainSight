@@ -465,11 +465,27 @@ class CombatTest(unittest.TestCase):
     def test_defensive_stun_free_other_stun_penalty(self):
         self.assertEqual(self.action('stun')['delta'],0)
         self.assertGreater(self.bot['stunned_until'],time.monotonic())
+        self.assertEqual(self.player['stunned_until'], 0)
         self.player['cooldown']=0
         npc=next(iter(self.world.npcs.values()))
         npc.update(x=5,z=16)
-        self.assertEqual(self.action('stun',npc)['delta'],-10)
-        self.assertEqual(self.player['score'],-10)
+        self.player['target_id'] = npc['id']
+        revision = self.player['revision']
+        now = time.monotonic()
+        with patch('combat.time.monotonic', return_value=now) as clock:
+            self.assertEqual(self.action('stun',npc)['delta'], -25)
+            self.assertEqual(self.player['stunned_until'], now+4)
+            state = self.world.public(npc)
+            self.assertAlmostEqual(state['stunned'], 1)
+            self.assertEqual(state['animation']['duration'], 1)
+            self.assertEqual(self.player['revision'], revision+1)
+            clock.return_value = now+1
+            self.assertTrue(self.world.active(npc, clock.return_value))
+            with self.assertRaisesRegex(APIError, 'Wait until you can act again'):
+                self.action(victim=npc)
+            clock.return_value = now+4
+            self.assertTrue(self.world.active(self.player, clock.return_value))
+        self.assertEqual(self.player['score'], -25)
 
     def test_range_walls_self_and_incapacitation_rejected(self):
         self.bot['x']=20
@@ -495,12 +511,23 @@ class CombatTest(unittest.TestCase):
         self.world.advance()
         self.assertGreater(self.player['dead_until'],time.monotonic())
         self.assertEqual(self.bot['score'],100)
-        self.player['dead_until']=time.monotonic()-.01
-        self.world.last-=.1
-        self.world.advance()
-        self.assertEqual(self.player['dead_until'],0)
-        self.assertEqual(self.player['revision'],2)
-        self.assertEqual((self.player['x'],self.player['z']),(4,16))
+        self.assertEqual(self.player['score'],0)
+        self.player['spawn'] = (4, 16)
+        self.bot['target_id'] = self.player['id']
+        for revision, index in enumerate((1, 2), start=2):
+            previous = self.player['spawn']
+            spawn = self.world.player_spawns[index]
+            self.player['dead_until'] = time.monotonic()-.01
+            self.world.last -= .1
+            with patch('combat.random.choice', return_value=spawn) as choose:
+                self.world.advance()
+            candidates = choose.call_args.args[0]
+            self.assertIn(spawn, candidates)
+            self.assertNotIn(previous, [(point['x'], point['z']) for point in candidates])
+            self.assertEqual(self.player['dead_until'], 0)
+            self.assertEqual(self.player['revision'], revision)
+            self.assertEqual((self.player['x'], self.player['z'], self.player['angle']),
+                             (spawn['x'], spawn['z'], spawn['angle']))
 
     def test_elimination_animations_shared_and_expire_at_respawn(self):
         now = time.monotonic()
@@ -833,6 +860,18 @@ class CombatTest(unittest.TestCase):
             self.assertEqual((effect['target_x'], effect['target_z']), (34, 16))
             clock.return_value = 1001
             self.assertAlmostEqual(self.world.state(self.player)['powers'][0]['cooldown'], 29.8)
+
+    def test_off_contract_gun_kill_awards_the_assigned_player(self):
+        target = dict(id='two', outfit=1, x=7, z=16, angle=0, stride=0, phase=0)
+        self.world.initialize(target)
+        self.server.players[2] = target
+        self.player.update(target_id=target['id'], powers=['gun', None])
+
+        result = self.world.use_power(self.player, 0, self.bot['id'])
+
+        self.assertEqual(result['delta'], -50)
+        self.assertEqual(self.world.state(target)['score'], 50)
+        self.assertEqual(self.bot['score'], 0)
 
     def test_public_state_keeps_contracts_private(self):
         public=self.world.public(self.player)

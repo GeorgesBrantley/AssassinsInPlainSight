@@ -1129,6 +1129,10 @@ function boot() {
   const $=selector=>document.querySelector(selector);
   const bind=(selector,type,handler)=>$(selector).addEventListener(type,handler);
   const game=$("#game"), canvas=$("#world"), roster=$("#roster"), overlay=$("#pause-overlay");
+  const playGuide=$("#how-to-play");
+  for (const button of document.querySelectorAll("[data-how-to-play]")) {
+    button.addEventListener("click",()=>playGuide.showModal());
+  }
   const reticle=$("#aim-reticle");
   const combatFeedback=$("#combat-feedback");
   reticle.style.left=`${50*(1-PLAY_SHIFT_X)}%`;
@@ -1215,6 +1219,7 @@ function boot() {
     reticle.classList.remove("locked");
   }
   function setMode(next) {
+    if (next!==mode && playGuide.open) playGuide.close();
     mode=next; game.dataset.mode=next;
     overlay.hidden=next!=="pause";
     $(".topbar").inert=next==="pause" || next==="auth";

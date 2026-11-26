@@ -82,8 +82,8 @@
     <div class="account-overlay" id="account-overlay">
       <section class="pause-card account-card" aria-labelledby="account-title">
         <p class="eyebrow"><span></span> WELCOME TO ASSASSINS IN PLAIN SIGHT</p>
-        <h1 id="account-title">Log in to the city</h1>
-        <p class="intro">Your story begins at the city gates.</p>
+        <h1 id="account-title">Log in</h1>
+        <p class="intro">Your account saves your progress and lets you unlock new assassins and abilities.</p>
         <form id="account-form">
           <label for="username">Username</label>
           <input id="username" name="username" autocomplete="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" placeholder="Your username" required>
@@ -92,7 +92,8 @@
           <p class="form-message" id="account-message" role="status" aria-live="polite">Connecting to the server…</p>
           <button class="enter-button" id="account-submit" type="submit" disabled>Log in <svg><use href="#i-arrow"/></svg></button>
         </form>
-        <button class="text-button" id="account-toggle" type="button">New here? Create an account</button>
+        <button class="text-button" id="account-toggle" type="button">Create an account</button>
+        <button class="text-button" type="button" data-how-to-play>How to Play</button>
       </section>
     </div>
 
@@ -101,9 +102,14 @@
         <span class="menu-brand">Assassins in Plain Sight</span>
         <button class="text-button" id="menu-home" type="button">Main menu</button>
         <button class="text-button" id="menu-unlocks" type="button">Unlocks</button>
+        <button class="text-button" type="button" data-how-to-play>How to Play</button>
         <span class="coin-balance" aria-label="Gold coins">◉ <strong id="gold-balance">—</strong></span>
       </nav>
-      <div id="menu-intro"><p class="eyebrow">HIDE IN PLAIN SIGHT</p><h1>The city has<br>many faces.</h1><p class="intro">Become one of them. Stalk your contract through crowded streets, master your abilities, and make every move count.</p><p class="menu-caption">A GAME OF STEALTH &amp; DECEPTION</p></div>
+      <div id="menu-intro">
+        <h1>Assassins in Plain Sight</h1>
+        <h2>A game of Stealth and Deception</h2>
+        <p class="intro">Stalk your prey, blending in with the city, while others try to hunt you down. Balance abilities and guile to win the day.</p>
+      </div>
       <div class="map-picker" id="map-picker" hidden>
         <label for="lobby-map">Match map</label>
         <select id="lobby-map" aria-describedby="lobby-map-help" disabled></select>
@@ -201,9 +207,37 @@
         <p class="intro">The match continues while you rest.</p>
         <p id="connection-status" class="form-message" role="status"></p>
         <button class="enter-button" id="resume" type="button">Resume <svg><use href="#i-arrow"/></svg></button>
+        <button class="text-button" type="button" data-how-to-play>How to Play</button>
         <button class="text-button" id="change" type="button">Leave match</button>
       </section>
     </div>
+    <dialog class="pause-card play-guide" id="how-to-play" aria-labelledby="how-to-play-title">
+      <header>
+        <h2 id="how-to-play-title" tabindex="-1" autofocus>How to Play</h2>
+        <form method="dialog"><button class="text-button" type="submit">Close</button></form>
+      </header>
+      <p>Find your assigned target and blend into the city. Lead the scoreboard when time runs out or be first to the match’s point goal.</p>
+
+      <h3>Start a match</h3>
+      <p>Select <strong>Join lobby</strong>, choose an available assassin and two abilities, then select <strong>Ready up</strong>. The lobby leader starts the match when everyone is ready. <strong>Test</strong> supports solo play with a practice rival. <strong>Competitive</strong> requires at least two players and assigns player-only contracts.</p>
+
+      <h3>Controls</h3>
+      <dl>
+        <dt><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></dt><dd>Move. Hold <kbd>Shift</kbd> to run.</dd>
+        <dt>Mouse</dt><dd>Click the game to capture the mouse and move it to look. Hold left click on a target in range for one second to lock on. Click again to clear the lock.</dd>
+        <dt><kbd>E</kbd> / <kbd>Q</kbd></dt><dd>Eliminate or stun a target within reach. A blue lock takes priority over the orange focus under the reticle.</dd>
+        <dt><kbd>F</kbd></dt><dd>Blend with a group, browse a stall, join a conversation, sit on a bench, or hide in hay. Press again to leave.</dd>
+        <dt><kbd>1</kbd> / <kbd>2</kbd></dt><dd>Use your equipped abilities. Stand up or exit the hay first.</dd>
+        <dt><kbd>Esc</kbd></dt><dd>Open the pause menu and release the mouse. The match keeps running.</dd>
+      </dl>
+      <p><strong>Touch.</strong> Move with the on-screen stick and drag to look. Tap Run to sprint, Kill or Stun to act on a nearby character, and the crowd button to blend. Aim the center dot before tapping a targeted ability.</p>
+
+      <h3>Hunt and score</h3>
+      <p>Check the portrait at the top left, then follow the contract compass. It flashes blue when you have a clear line of sight to your target.</p>
+      <p>Walking restores stealth, running drains it, and blending, sitting, or hiding builds it past the normal limit. Higher stealth raises a contract elimination from 50 to as much as 200 points. A full Hidden meter earns 50 points.</p>
+      <p>Eliminating anyone outside your contract costs 50 points. If a pursuer eliminates the wrong character, you earn 50 points. After an elimination, you respawn at a random location.</p>
+      <p>Stunning a pursuer is free and stuns them for four seconds. Stunning anyone else costs 25 points, stuns them for one second, and stuns you for four seconds.</p>
+    </dialog>
     <p class="error" id="error" hidden>Assassins in Plain Sight needs WebGL. Try a browser with hardware acceleration enabled.</p>
     <noscript><p class="error">Enable JavaScript to play Assassins in Plain Sight.</p></noscript>
   </main>

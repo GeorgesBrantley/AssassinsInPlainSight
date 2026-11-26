@@ -583,6 +583,7 @@ class MultiplayerTest(unittest.TestCase):
                 self.assertEqual((player['x'], player['z']), (spawn['x'], spawn['z']))
             self.assertGreater(math.dist(players[0]['spawn'], players[1]['spawn']), 20)
             player = players[1]
+            original_spawn = player['spawn']
             player.update(x=47.5, z=-26.5, updated=time.monotonic())
             revision = player['revision']
         movement = dict(id=two['id'], x=47.5, z=-26.5, angle=0, stride=0, phase=0, revision=revision)
@@ -591,7 +592,9 @@ class MultiplayerTest(unittest.TestCase):
             player.update(dead_until=time.monotonic()-.01)
             world.last -= .1
             world.advance()
-            self.assertEqual((player['x'], player['z']), player['spawn'])
+            self.assertIn((player['x'], player['z'], player['angle']),
+                          [(s['x'], s['z'], s['angle']) for s in world.player_spawns])
+            self.assertNotEqual((player['x'], player['z']), original_spawn)
             self.server.deadline = time.monotonic()-11
         lobby = self.request('/api/server')[1]['lobby']
         self.assertEqual((lobby['phase'], lobby['map']), ('lobby', 'betrahold'))
