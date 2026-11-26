@@ -32,7 +32,7 @@ Accounts and sessions persist in `data/bellward.sqlite3`, which is excluded from
 
 ## Progression and unlocks
 
-Every account starts with **20 gold coins**. Open **Unlocks** from the main menu or lobby to purchase assassins and abilities at the listed prices. See the [unlock price list](UNLOCKS.md) for details. The pricing update relocks previous purchases once and preserves each account’s current gold balance. New purchases and gold persist across logins and server restarts.
+New accounts start with **1 gold coin**. Open **Unlocks** from the main menu or lobby to purchase assassins and abilities at the listed prices. See the [unlock price list](UNLOCKS.md) for details. The pricing update relocks previous purchases once and preserves each account’s current gold balance. New purchases and gold persist across logins and server restarts.
 
 The first six assassins, Smoke Cloud, and Disguise are available immediately. The other twelve assassins and seven abilities require an unlock. Every ability has its own icon in the lobby, collection, and in-game loadout.
 

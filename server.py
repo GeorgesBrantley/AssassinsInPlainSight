@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parent
 GAME_TITLE = 'Assassins in Plain Sight'
 SESSION_AGE = 7 * 24 * 3600
+STARTING_GOLD = 1
 ABILITY_COSTS = {key: power['cost'] for key, power in POWERS.items()}
 MATCH_RULES = {'time-120': 120, 'time-300': 300, 'time-600': 600,
                'score-500': 500, 'score-1000': 1000, 'score-1500': 1500}
@@ -30,7 +31,7 @@ def migrate_unlocks(db):
     db.execute('BEGIN IMMEDIATE')
     columns = {row[1] for row in db.execute('PRAGMA table_info(accounts)')}
     if 'gold' not in columns:
-        db.execute('ALTER TABLE accounts ADD COLUMN gold INTEGER NOT NULL DEFAULT 20')
+        db.execute(f'ALTER TABLE accounts ADD COLUMN gold INTEGER NOT NULL DEFAULT {STARTING_GOLD}')
     db.execute("""CREATE TABLE IF NOT EXISTS unlocks (
         user_id INTEGER NOT NULL, kind TEXT NOT NULL, item TEXT NOT NULL,
         PRIMARY KEY(user_id, kind, item))""")
@@ -473,7 +474,8 @@ class Handler(SimpleHTTPRequestHandler):
                 salt = secrets.token_hex(16)
                 digest = hashlib.pbkdf2_hmac('sha256', password.encode(), bytes.fromhex(salt), 600000).hex()
                 try:
-                    cursor = db.execute('INSERT INTO accounts(username, salt, password_hash) VALUES (?, ?, ?)', (username, salt, digest))
+                    cursor = db.execute('INSERT INTO accounts(username, salt, password_hash, gold) VALUES (?, ?, ?, ?)',
+                                        (username, salt, digest, STARTING_GOLD))
                 except sqlite3.IntegrityError:
                     raise APIError(409, 'That username is already taken.')
                 user_id = cursor.lastrowid
