@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1c1c16">
-  <meta name="description" content="Explore Bellward, a low-poly medieval city alive with wandering crowds.">
-  <title>Bellward — The Old City</title>
+  <meta name="description" content="Play Assassins in Plain Sight, a stealth game set in a low-poly medieval city alive with wandering crowds.">
+  <title>Assassins in Plain Sight</title>
   <link rel="stylesheet" href="./style.css">
   <script defer src="./engine.js"></script>
   <script defer src="./city.js"></script>
+  <script defer src="./multiplayer.js"></script>
   <script defer src="./game.js"></script>
 </head>
 <body>
@@ -21,13 +22,18 @@
     <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2zm6-2v14m6-12v14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></symbol>
     <symbol id="i-people" viewBox="0 0 24 24"><path d="M16 19v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-3.9M15 5a3.5 3.5 0 0 1 0 6.8" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="9.5" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
     <symbol id="i-reset" viewBox="0 0 24 24"><path d="M5 10a7 7 0 1 1 1 7m-1-7V5m0 5h5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-stealth-savage" viewBox="0 0 24 24"><path d="m6 15 3 3m-5 2 4-4m1 0L18 5l3-2-1 4-9 11"/></symbol>
+    <symbol id="i-stealth-bloody" viewBox="0 0 24 24"><path d="M12 3c-2 4-6 8-6 12a6 6 0 0 0 12 0c0-4-4-8-6-12Z M9 15a3 3 0 0 0 3 3"/></symbol>
+    <symbol id="i-stealth-stealth" viewBox="0 0 24 24"><path d="M3 12s3.5-5 9-5 9 5 9 5-3.5 5-9 5-9-5-9-5Z M4 20 20 4"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <symbol id="i-stealth-incognito" viewBox="0 0 24 24"><path d="M3 7c3-1 6 0 9 1 3-1 6-2 9-1 0 5-1.5 9-5 10-1.5.5-3-1-4-2-1 1-2.5 2.5-4 2-3.5-1-5-5-5-10Z M7 11l3 1m7-1-3 1"/></symbol>
+    <symbol id="i-pursuer" viewBox="0 0 24 24"><circle cx="12" cy="11" r="3"/><path d="M6.5 20v-1a5.5 5.5 0 0 1 11 0v1 M12 2v3M3 11h3m12 0h3"/></symbol>
   </svg>
-  <main class="game" id="game" data-mode="select">
+  <main class="game" id="game" data-mode="auth">
     <canvas id="world" aria-label="Third-person view of the medieval city"></canvas>
     <div class="vignette" aria-hidden="true"></div>
 
     <header class="topbar">
-      <div class="brand"><svg><use href="#i-mark"/></svg><div><div class="brand-name">BELLWARD</div><div class="brand-sub">THE OLD CITY</div></div></div>
+      <div class="brand"><svg><use href="#i-mark"/></svg><div><div class="brand-name">Assassins in Plain Sight</div><div class="brand-sub" id="map-name">Betrahold</div></div></div>
       <div class="compass" aria-hidden="true">
         <div class="compass-readout"><span id="bearing-left">NW</span><i></i><span id="bearing-main">N</span><i></i><span id="bearing-right">NE</span></div>
         <div class="compass-scale"></div><b></b>
@@ -38,50 +44,168 @@
       </div>
     </header>
 
-    <section class="selection" id="selection" aria-labelledby="selection-title">
-      <div class="selection-header">
-        <p class="eyebrow"><span></span> THE OLD CITY</p>
-        <h1 id="selection-title">Choose your<br> character</h1>
-        <p class="intro">Pick a face to wear in the streets of Bellward.</p>
+    <section class="target-card play-hud" aria-label="Your target">
+      <img id="target-portrait" alt="Target character appearance" hidden>
+      <div><p class="eyebrow">YOUR CONTRACT</p><h2 id="target-name">Assigning target…</h2><p id="target-detail"></p></div>
+    </section>
+    <div class="target-compass play-hud" id="target-compass" role="img" aria-label="Approximate target bearing; sector widens as you approach" hidden>
+      <div class="compass-disc"><div id="target-sector"></div><span>▲</span></div>
+      <small id="target-signal">FIND YOUR TARGET</small>
+    </div>
+    <div class="stealth-hud play-hud">
+      <div class="stealth-meter" id="stealth-meter" data-tier="stealth" role="img" aria-label="Stealth tier: stealth">
+        <svg class="stealth-ring" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="stealth-track" cx="32" cy="32" r="22" stroke-width="6"/>
+          <circle class="stealth-fill" cx="32" cy="32" r="22" stroke-width="6" pathLength="100"/>
+          <circle class="stealth-track" cx="32" cy="32" r="29" stroke-width="2.5"/>
+          <circle class="stealth-overflow" cx="32" cy="32" r="29" stroke-width="2.5" pathLength="100"/>
+        </svg>
+        <svg class="stealth-tier-icon" viewBox="0 0 24 24" aria-hidden="true"><use id="stealth-tier-icon" href="#i-stealth-stealth"/></svg>
       </div>
-      <div class="roster" id="roster" role="group" aria-label="Characters"></div>
+      <div class="pursuer-icons" id="pursuer-icons" role="img" aria-label="Pursuers" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true" hidden><use href="#i-pursuer"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" hidden><use href="#i-pursuer"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" hidden><use href="#i-pursuer"/></svg>
+      </div>
+      <div class="hidden-bonus">
+        <span id="hidden-bonus-label" role="status">Hidden</span>
+        <progress id="hidden-progress" aria-label="Hidden bonus progress" value="0" max="1"></progress>
+      </div>
+    </div>
+    <div class="aim-reticle play-hud" id="aim-reticle" aria-hidden="true"></div>
+    <div class="power-bar play-hud" aria-label="Equipped powers">
+      <button type="button" class="power-slot" id="use-power-1"><kbd>1</kbd><span><strong></strong><small></small></span></button>
+      <button type="button" class="power-slot" id="use-power-2"><kbd>2</kbd><span><strong></strong><small></small></span></button>
+    </div>
+    <div class="combat-feedback play-hud" id="combat-feedback" role="status" aria-live="polite"></div>
+
+    <div class="account-overlay" id="account-overlay">
+      <section class="pause-card account-card" aria-labelledby="account-title">
+        <p class="eyebrow"><span></span> WELCOME TO ASSASSINS IN PLAIN SIGHT</p>
+        <h1 id="account-title">Log in to the city</h1>
+        <p class="intro">Your story begins at the city gates.</p>
+        <form id="account-form">
+          <label for="username">Username</label>
+          <input id="username" name="username" autocomplete="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" placeholder="Your username" required>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required>
+          <p class="form-message" id="account-message" role="status" aria-live="polite">Connecting to the server…</p>
+          <button class="enter-button" id="account-submit" type="submit" disabled>Log in <svg><use href="#i-arrow"/></svg></button>
+        </form>
+        <button class="text-button" id="account-toggle" type="button">New here? Create an account</button>
+      </section>
+    </div>
+
+    <section class="selection" id="selection" aria-labelledby="selection-title" inert>
+      <nav class="menu-nav" aria-label="Game menu">
+        <span class="menu-brand">Assassins in Plain Sight</span>
+        <button class="text-button" id="menu-home" type="button">Main menu</button>
+        <button class="text-button" id="menu-unlocks" type="button">Unlocks</button>
+        <span class="coin-balance" aria-label="Gold coins">◉ <strong id="gold-balance">—</strong></span>
+      </nav>
+      <div id="menu-intro"><p class="eyebrow">HIDE IN PLAIN SIGHT</p><h1>The city has<br>many faces.</h1><p class="intro">Become one of them. Stalk your contract through crowded streets, master your abilities, and make every move count.</p><p class="menu-caption">A GAME OF STEALTH &amp; DECEPTION</p></div>
+      <div class="map-picker" id="map-picker" hidden>
+        <label for="lobby-map">Match map</label>
+        <select id="lobby-map" aria-describedby="lobby-map-help" disabled></select>
+        <small id="lobby-map-help"></small>
+        <label for="lobby-mode">Game mode</label>
+        <select id="lobby-mode" aria-describedby="lobby-mode-help" disabled>
+          <option value="test">Test</option><option value="competitive">Competitive</option>
+        </select>
+        <small id="lobby-mode-help"></small>
+        <label for="lobby-rule">Match rule</label>
+        <select id="lobby-rule" aria-describedby="lobby-rule-help" disabled>
+          <option value="time-120">2 minutes</option><option value="time-300">5 minutes</option><option value="time-600">10 minutes</option>
+          <option value="score-500">First to 500 points</option><option value="score-1000">First to 1,000 points</option><option value="score-1500">First to 1,500 points</option>
+        </select>
+        <small id="lobby-rule-help"></small>
+      </div>
+      <div id="loadout-panel" hidden>
+      <div class="selection-header">
+        <h1 id="selection-title">Choose your<br> assassin</h1>
+        <p class="intro">Choose an unclaimed assassin and equip two abilities. Locked items must be unlocked first.</p>
+      </div>
+      <div class="roster" id="roster" role="group" aria-label="Assassins"></div>
       <div class="bio" aria-live="polite">
         <i></i><div><h2 id="character-name">The Wayfarer</h2><p id="character-description"></p></div>
       </div>
-      <button class="enter-button" id="enter" type="button">Enter the city <svg><use href="#i-arrow"/></svg></button>
+      </div>
+      <div id="join-panel">
+      <div class="server-card">
+        <div class="server-heading"><span class="server-dot"></span><strong id="lobby-map-name">Betrahold</strong><span id="server-population">Checking server…</span></div>
+        <p>Signed in as <strong id="account-name"></strong> · One shared lobby</p>
+      </div>
+      <ul id="current-lobby" aria-label="Current lobby"></ul>
+      <button class="enter-button" id="enter" type="button" disabled>Join lobby <svg><use href="#i-arrow"/></svg></button>
+      </div>
+      <div id="lobby-controls" hidden>
+        <ul id="lobby-players" aria-label="Lobby players"></ul>
+        <fieldset class="power-loadout" id="power-loadout">
+          <legend>Select up to two abilities</legend>
+          <p id="ability-selection-status" role="status" aria-live="polite">0 / 2 selected · Choose two to ready up.</p>
+          <div id="ability-picker" class="ability-picker" role="group" aria-label="Ability selection" aria-describedby="ability-selection-status"></div>
+        </fieldset>
+        <p id="lobby-status" role="status" aria-live="polite"></p>
+        <button class="enter-button" id="ready" type="button" aria-describedby="lobby-status" disabled>Ready up</button>
+        <button class="enter-button" id="start-match" type="button" hidden>Start · 2 minute match</button>
+        <button class="text-button" id="leave-lobby" type="button">Leave lobby</button>
+      </div>
+      <p class="form-message" id="server-message" role="status" aria-live="polite"></p>
+      <div id="unlocks-panel" hidden>
+        <p class="eyebrow">BUILD YOUR ARSENAL</p><h1>Unlocks</h1>
+        <p class="intro">Every assassin and ability costs 1 gold coin. Your collection stays with your account.</p>
+        <h2 class="collection-title">Assassins</h2><div id="unlock-assassins" class="unlock-grid"></div>
+        <h2 class="collection-title">Abilities</h2><div id="unlock-abilities" class="unlock-grid"></div>
+        <p id="unlock-message" class="form-message" role="status" aria-live="polite"></p>
+      </div>
+      <button class="text-button" id="logout" type="button">Log out</button>
     </section>
 
-    <aside class="district" aria-label="Current district">
-      <div class="district-title"><svg><use href="#i-map"/></svg><span>DISTRICT MAP</span></div>
-      <div class="map-frame"><canvas id="map" width="336" height="252" aria-label="Map of Bellward"></canvas><span class="map-north">N</span></div>
-      <div class="map-caption"><i></i><span id="district-name">Market Court</span></div>
-    </aside>
-    <div class="place" aria-hidden="true"><span></span><div><div class="place-label">BELLWARD DISTRICT</div><div id="place-name">Market Court</div></div></div>
+    <div class="map-hud">
+      <div class="score-card play-hud"><span><span id="match-time-label">TIME</span> <strong id="match-time">2:00</strong></span><span>SCORE <strong id="score">0</strong></span></div>
+      <aside class="district" aria-label="Current district">
+        <div class="district-title"><svg><use href="#i-map"/></svg><span>DISTRICT MAP</span></div>
+        <div class="map-frame"><canvas id="map" width="336" height="252" aria-label="Map of Betrahold showing your position"></canvas><span class="map-north">N</span></div>
+        <div class="map-caption"><i></i><span id="district-name">Market Court</span></div>
+      </aside>
+    </div>
+    <ol class="kill-feed play-hud" id="kill-feed" aria-label="Recent eliminations" aria-live="polite" aria-relevant="additions"></ol>
 
     <div id="crowd-status" class="crowd-status" aria-live="polite" hidden><svg><use href="#i-people"/></svg><span id="crowd-text"></span></div>
     <footer class="controls" aria-label="Controls">
       <span class="desktop-controls"><span class="keyset"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span> Move</span>
-      <span class="desktop-controls"><svg><use href="#i-mouse"/></svg> Drag to look</span>
+      <span class="desktop-controls"><svg><use href="#i-mouse"/></svg> Move mouse to look · Hold left click 1s to lock · Click to unlock</span>
       <span class="desktop-controls"><kbd>Shift</kbd> Run</span>
-      <span class="desktop-controls"><kbd>E</kbd> Blend</span>
+      <span class="desktop-controls"><kbd>E</kbd> Eliminate</span>
+      <span class="desktop-controls"><kbd>Q</kbd> Stun</span>
+      <span class="desktop-controls"><kbd>F</kbd> Blend</span>
       <span class="desktop-controls"><kbd>Esc</kbd> Pause</span>
       <span class="touch-help">Use the stick to move · Drag to look</span>
     </footer>
     <div class="touch-controls">
       <div id="stick" class="stick" aria-label="Movement joystick"><span></span></div>
-      <div class="touch-actions"><button id="touch-run" class="icon-button" type="button" aria-label="Run" aria-pressed="false">Run</button><button id="touch-blend" class="icon-button" type="button" aria-label="Blend into the crowd"><svg><use href="#i-people"/></svg></button></div>
+      <div class="touch-actions"><button id="touch-kill" class="icon-button" type="button">Kill</button><button id="touch-stun" class="icon-button" type="button">Stun</button><button id="touch-run" class="icon-button" type="button" aria-label="Run" aria-pressed="false">Run</button><button id="touch-blend" class="icon-button" type="button" aria-label="Blend into the crowd"><svg><use href="#i-people"/></svg></button></div>
     </div>
 
+    <div class="account-overlay" id="results-overlay" hidden>
+      <section class="pause-card results-card" role="dialog" aria-modal="true" aria-labelledby="results-title">
+        <p class="eyebrow">MATCH COMPLETE</p><h2 id="results-title">Final standings</h2>
+        <table><thead><tr><th>Name</th><th>Successful assassinations</th><th>Points</th><th>Coins earned</th></tr></thead><tbody id="results-players"></tbody></table>
+        <p id="results-countdown" role="status"></p>
+      </section>
+    </div>
     <div class="pause-overlay" id="pause-overlay" hidden>
       <section class="pause-card" role="dialog" aria-modal="true" aria-labelledby="pause-title">
         <svg class="pause-mark"><use href="#i-mark"/></svg>
-        <h2 id="pause-title">Paused</h2>
+        <h2 id="pause-title">Taking a breath</h2>
+        <p class="intro">The match continues while you rest.</p>
+        <p id="connection-status" class="form-message" role="status"></p>
         <button class="enter-button" id="resume" type="button">Resume <svg><use href="#i-arrow"/></svg></button>
-        <button class="text-button" id="change" type="button">Choose a character</button>
+        <button class="text-button" id="change" type="button">Leave match</button>
       </section>
     </div>
-    <p class="error" id="error" hidden>Bellward needs WebGL. Try a browser with hardware acceleration enabled.</p>
-    <noscript><p class="error">Enable JavaScript to enter Bellward.</p></noscript>
+    <p class="error" id="error" hidden>Assassins in Plain Sight needs WebGL. Try a browser with hardware acceleration enabled.</p>
+    <noscript><p class="error">Enable JavaScript to play Assassins in Plain Sight.</p></noscript>
   </main>
 </body>
 </html>

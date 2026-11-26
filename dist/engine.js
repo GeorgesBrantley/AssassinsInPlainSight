@@ -146,6 +146,7 @@ class Renderer {
     this.portrait = portrait;
     this.staticBuffer = this.buffer();
     this.movingBuffer = this.buffer();
+    this.glowBuffer = portrait ? null : this.buffer();
     this.scene = this.program(`#version 300 es
       layout(location=0) in vec3 point;
       layout(location=1) in vec3 normal;
@@ -162,11 +163,17 @@ class Renderer {
       }`, `#version 300 es
       precision highp float;
       uniform sampler2D shadowMap;
-      uniform bool shadows, portrait;
+      uniform bool shadows, portrait, groundGlow;
+      uniform float opacity;
       in vec3 surface, paint, shadePoint;
       in float distanceToEye;
       out vec4 outputColor;
       void main() {
+        if (groundGlow) {
+          float fade = 1. - smoothstep(19.,60.,distanceToEye);
+          outputColor = vec4(paint,surface.x * fade);
+          return;
+        }
         vec3 sun = normalize(vec3(-.47,.81,.45));
         float facing = max(0.0,dot(normalize(surface),sun));
         float shadow = 0.;
@@ -185,8 +192,8 @@ class Renderer {
         vec3 lit = paint * (ambient + direct);
         if (portrait) lit = paint * (vec3(.69,.67,.63) + vec3(.63,.54,.42) * facing);
         float fog = portrait ? 0. : .64 * (1. - exp(-pow(max(distanceToEye - 10.,0.) * .010,1.36)));
-        outputColor = vec4(mix(lit,vec3(.78,.74,.61),fog),1.);
-      }`, ["view","camera","lightView","shadowMap","shadows","portrait"]);
+        outputColor = vec4(mix(lit,vec3(.78,.74,.61),fog),opacity);
+      }`, ["view","camera","lightView","shadowMap","shadows","portrait","groundGlow","opacity"]);
     if (!portrait) {
       this.depth = this.program(`#version 300 es
         layout(location=0) in vec3 point;
@@ -281,9 +288,10 @@ class Renderer {
     gl.bindVertexArray(buffer.vao);
     gl.drawArrays(gl.TRIANGLES,0,buffer.count);
   }
-  bake(mesh, casters) {
+  bake(mesh, casters, glow) {
     const gl = this.gl;
     this.upload(this.staticBuffer,mesh);
+    if (glow && this.glowBuffer) this.upload(this.glowBuffer,glow);
     if (!this.shadows) return;
     const buffer = this.buffer();
     this.upload(buffer,casters);
@@ -327,8 +335,33 @@ class Renderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D,this.shadowTexture || null);
     gl.uniform1i(u.shadowMap,0);
+    gl.uniform1f(u.opacity,1);
     if (this.staticBuffer.count) this.geometry(this.staticBuffer);
+    if (this.glowBuffer?.count || options.walkingGlow?.data.length) {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+      gl.depthMask(false);
+      gl.uniform1i(u.groundGlow,1);
+      if (this.glowBuffer?.count) this.geometry(this.glowBuffer);
+      if (options.walkingGlow?.data.length) {
+        this.upload(this.movingBuffer,options.walkingGlow,true);
+        this.geometry(this.movingBuffer);
+      }
+      gl.uniform1i(u.groundGlow,0);
+      gl.depthMask(true);
+      gl.disable(gl.BLEND);
+    }
     this.upload(this.movingBuffer,mesh,true);
     this.geometry(this.movingBuffer);
+    if (options.smoke?.data.length) {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+      gl.depthMask(false);
+      gl.uniform1f(u.opacity,.29);
+      this.upload(this.movingBuffer,options.smoke,true);
+      this.geometry(this.movingBuffer);
+      gl.depthMask(true);
+      gl.disable(gl.BLEND);
+    }
   }
 }
