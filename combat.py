@@ -13,7 +13,7 @@ class APIError(Exception):
 
 MAP_NAMES = {'testa': 'Testa', 'betrahold': 'Betrahold'}
 MAP_FILES = {'testa': 'world.json', 'betrahold': 'world-betrahold.json'}
-ASSASSIN_COSTS = (0, 0, 0, 0, 0, 0, 1, 3, 3, 5, 5, 5, 5, 5, 10, 10, 10, 10)  # Roster order in dist/game.js.
+ASSASSIN_COSTS = (0, 0, 0, 0, 0, 0, 5, 5, 5, 10, 10, 10, 10, 10, 15, 15, 15, 15)  # Roster order in dist/game.js.
 OUTFIT_COUNT = len(ASSASSIN_COSTS)
 
 REACH = 2.2
@@ -41,17 +41,17 @@ POWERS = {
     'smoke': dict(name='Smoke Cloud', duration=4, cooldown=15, cost=0, description='Create a large plume of smoke.'),
     'disguise': dict(name='Disguise', duration=15, cooldown=15, cost=0, target='character', range=12,
                      description='Copy the targeted character’s appearance.'),
-    'firecrackers': dict(name='Firecrackers', duration=4, cooldown=25, cost=2,
+    'firecrackers': dict(name='Firecrackers', duration=4, cooldown=25, cost=5,
                          description=f'Send citizens within {FIRECRACKER_RADIUS} units sprinting in random directions.'),
-    'invisibility': dict(name='Invisibility Potion', duration=6, cooldown=20, cost=3,
+    'invisibility': dict(name='Invisibility Potion', duration=6, cooldown=20, cost=5,
                          description='Vanish and hold full Incognito stealth for 6 seconds. Actions and other powers are blocked until you reappear.'),
-    'cult': dict(name='Cult', duration=0, cooldown=25, cost=3, description='Give nearby citizens your current appearance for the rest of the match.'),
-    'sprint': dict(name='Sprint Boost', duration=10, cooldown=15, cost=1, multiplier=2, description='Double your movement speed.'),
-    'decoy': dict(name='Decoy', duration=5, cooldown=20, cost=3, target='npc', range=12,
+    'cult': dict(name='Cult', duration=0, cooldown=25, cost=10, description='Give nearby citizens your current appearance for the rest of the match.'),
+    'sprint': dict(name='Sprint Boost', duration=10, cooldown=15, cost=2, multiplier=2, description='Double your movement speed.'),
+    'decoy': dict(name='Decoy', duration=5, cooldown=20, cost=5, target='npc', range=12,
                   description='Send one citizen sprinting in a random direction.'),
-    'mute': dict(name='Mute', duration=6, cooldown=15, cost=2, target='character', range=12,
+    'mute': dict(name='Mute', duration=6, cooldown=15, cost=10, target='character', range=12,
                  description='Disable the targeted player’s powers and contract compass.'),
-    'gun': dict(name='Gun', duration=.8, cooldown=30, cost=1, target='character', range=30,
+    'gun': dict(name='Gun', duration=.8, cooldown=30, cost=5, target='character', range=30,
                 description='Eliminate a character from range with a visible shot.'),
 }
 

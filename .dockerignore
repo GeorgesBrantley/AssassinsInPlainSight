@@ -1,0 +1,8 @@
+*
+!Dockerfile
+!server.py
+!combat.py
+!world.json
+!world-betrahold.json
+!dist/
+!dist/**

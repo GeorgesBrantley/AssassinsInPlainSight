@@ -76,9 +76,9 @@ class MultiplayerTest(unittest.TestCase):
         self.assertEqual(initial['gold'], 1)
         self.assertEqual(initial['assassins'], list(range(6)))
         self.assertEqual(initial['abilities'], ['smoke', 'disguise'])
-        self.assertEqual(initial['costs']['assassin'], [0, 0, 0, 0, 0, 0, 1, 3, 3, 5, 5, 5, 5, 5, 10, 10, 10, 10])
-        self.assertEqual(initial['costs']['ability'], dict(smoke=0, disguise=0, firecrackers=2,
-                         invisibility=3, cult=3, sprint=1, decoy=3, mute=2, gun=1))
+        self.assertEqual(initial['costs']['assassin'], [0, 0, 0, 0, 0, 0, 5, 5, 5, 10, 10, 10, 10, 10, 15, 15, 15, 15])
+        self.assertEqual(initial['costs']['ability'], dict(smoke=0, disguise=0, firecrackers=5,
+                         invisibility=5, cult=10, sprint=2, decoy=5, mute=10, gun=5))
         self.assertEqual(self.request('/api/join', {'outfit': 8}, cookie=cookie)[0], 403)
         player = self.request('/api/join', {}, cookie=cookie)[1]['player']
         self.assertEqual(self.request('/api/character', {'id': player['id'], 'outfit': 8}, cookie=cookie)[0], 403)
@@ -86,12 +86,12 @@ class MultiplayerTest(unittest.TestCase):
         self.assertEqual(self.request('/api/unlock', {'kind': 'assassin', 'item': 8}, cookie=cookie)[0], 409)
         self.set_gold('Unlocker', 20)
         unlocked = self.request('/api/unlock', {'kind': 'assassin', 'item': 8}, cookie=cookie)[1]
-        self.assertEqual(unlocked['gold'], 17)
+        self.assertEqual(unlocked['gold'], 15)
         self.assertIn(8, unlocked['assassins'])
         self.assertEqual(self.request('/api/unlock', {'kind': 'assassin', 'item': 8}, cookie=cookie)[0], 409)
         self.assertEqual(self.request('/api/character', {'id': player['id'], 'outfit': 8}, cookie=cookie)[0], 200)
         unlocked = self.request('/api/unlock', {'kind': 'ability', 'item': 'gun'}, cookie=cookie)[1]
-        self.assertEqual(unlocked['gold'], 16)
+        self.assertEqual(unlocked['gold'], 10)
         self.assertEqual(self.request('/api/powers', {'id': player['id'], 'powers': ['smoke', 'gun']}, cookie=cookie)[0], 200)
         self.assertEqual(self.request('/api/progression', cookie=other)[1], initial)
         restarted = CityServer(('127.0.0.1', 0), self.database)
@@ -107,10 +107,10 @@ class MultiplayerTest(unittest.TestCase):
             purchases = list(pool.map(lambda _: self.request('/api/unlock',
                 {'kind': 'ability', 'item': 'mute'}, cookie=cookie)[0], range(2)))
         self.assertEqual(sorted(purchases), [200, 409])
-        self.assertEqual(self.request('/api/progression', cookie=cookie)[1]['gold'], 14)
+        self.assertEqual(self.request('/api/progression', cookie=cookie)[1]['gold'], 0)
         self.set_gold('Unlocker', 2)
         status, result, _ = self.request('/api/unlock', {'kind': 'ability', 'item': 'decoy'}, cookie=cookie)
-        self.assertEqual((status, result['error']), (409, 'You need 3 gold coins to unlock this item.'))
+        self.assertEqual((status, result['error']), (409, 'You need 5 gold coins to unlock this item.'))
         progression = self.request('/api/progression', cookie=cookie)[1]
         self.assertEqual(progression['gold'], 2)
         self.assertNotIn('decoy', progression['abilities'])
@@ -124,6 +124,8 @@ class MultiplayerTest(unittest.TestCase):
             upgraded = CityServer(('127.0.0.1', 0), database)
             try:
                 self.assertEqual(upgraded.progression(1)['gold'], 1)
+                with upgraded.db() as db:
+                    db.execute('UPDATE accounts SET gold = 5 WHERE id = 1')
                 self.assertEqual(upgraded.unlock(1, 'assassin', 6)['gold'], 0)
             finally:
                 upgraded.server_close()
@@ -156,7 +158,7 @@ class MultiplayerTest(unittest.TestCase):
             reopened = CityServer(('127.0.0.1', 0), database)
             try:
                 self.assertIn('firecrackers', reopened.progression(2)['abilities'])
-                self.assertEqual(reopened.progression(2)['gold'], 17)
+                self.assertEqual(reopened.progression(2)['gold'], 14)
             finally:
                 reopened.server_close()
 
@@ -180,7 +182,7 @@ class MultiplayerTest(unittest.TestCase):
 
     def test_female_characters_can_join_and_are_shared(self):
         cookie = self.account('Weaver')
-        self.set_gold('Weaver', 18)
+        self.set_gold('Weaver', 35)
         for outfit in range(8, 12):
             self.assertEqual(self.request('/api/unlock', {'kind': 'assassin', 'item': outfit}, cookie=cookie)[0], 200)
             status, result, _ = self.request('/api/join', {'outfit': outfit}, cookie=cookie)
@@ -195,7 +197,7 @@ class MultiplayerTest(unittest.TestCase):
         for username, outfits, remaining in [('BellwardGuard', (12, 13), 10), ('BellwardRoyal', (14, 15), 0),
                                              ('BellwardHeirs', (16, 17), 0)]:
             cookie = self.account(username)
-            self.set_gold(username, 20)
+            self.set_gold(username, 30)
             for outfit in outfits:
                 self.assertEqual(self.request('/api/join', {'outfit': outfit}, cookie=cookie)[0], 403)
                 status, progression, _ = self.request('/api/unlock', {'kind': 'assassin', 'item': outfit},
@@ -445,7 +447,7 @@ class MultiplayerTest(unittest.TestCase):
 
     def test_lobby_permissions_character_lock_and_match_cycle(self):
         first, second = self.account('LobbyLeader'), self.account('LobbyGuest')
-        self.set_gold('LobbyLeader', 6)
+        self.set_gold('LobbyLeader', 15)
         one = self.request('/api/join', {'outfit': 0}, cookie=first)[1]['player']
         self.assertEqual(self.request('/api/join', {'outfit': 0}, cookie=second)[0], 409)
         two = self.request('/api/join', {'outfit': 1}, cookie=second)[1]['player']
